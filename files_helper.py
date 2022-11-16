@@ -126,7 +126,7 @@ def pptx_to_pdf_helper(team="",file_list=[],input_path=EXTRACT_DIR, output_path=
             file_to_show = file_rename
         except Exception(e):
             logging.info(e) 
-            print(f"ERROR: Could not move {file_rename} perhaps the files is already renamed?")
+            print(f"ERROR: Could not rename {file_rename} perhaps the files is already renamed?")
             file_renamed = True
         print(f"Team {team} submitted a .pptx file {filename}. I need your help to convert it to pdf. Please use your tool of choice to convert the pptx to PDF, and delete the pptx")
         open_finder=input("Would you like to open a finder window for the team's submission? [Y]es or [N]o: ")
