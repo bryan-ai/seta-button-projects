@@ -1,0 +1,20 @@
+# generated folders
+pages/
+pages_completed/
+submissions_copy/
+submissions/
+project_files/
+
+# credentials / config
+credentials/
+
+# testing files and folders
+test.py
+test/
+
+# logging files
+logging.log
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+.DS_Store
