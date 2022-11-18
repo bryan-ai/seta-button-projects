@@ -1,5 +1,6 @@
 import csv
 import os
+import sys
 import subprocess
 from pathlib import Path
 import logging
@@ -33,7 +34,7 @@ CREDENTIALS_DIR = os.path.join(WORKING_DIR,"credentials")
 # TEAM_LIST = os.path.join(WORKING_DIR,"team_list.csv")
 
 
-CLASSIFICATION_SPREADSHEET = "2101FTDS_classification_predict"
+PREDICT_SOURCE_SPREADSHEET = sys.argv[1]
 STUDENT_LIST_WORKSHEET_REMOTE = "student_list"
 TEAM_LIST_WORKSHEET_REMOTE = "team_list"
 MARKS_SUMMARY_REMOTE = "[imported] predict_marks_summary"
@@ -175,7 +176,11 @@ def unzip_and_move(submittor_list=[],team="",download_path="submissions_copy", e
 
 if __name__ == "__main__":
 	'''Create '''
-	class_spreadsheet_object = get_spreadsheet(CLASSIFICATION_SPREADSHEET)
+	try:
+		class_spreadsheet_object = get_spreadsheet(PREDICT_SOURCE_SPREADSHEET)
+	except Exception as e:
+		logging.log(e)
+		print("Did you forget to provide a spreadheet name as argument?")
 
 	student_list_worksheet_object = get_worksheet_by_title(class_spreadsheet_object,STUDENT_LIST_WORKSHEET_REMOTE)
 	teams_list_worksheet_object = get_worksheet_by_title(class_spreadsheet_object,TEAM_LIST_WORKSHEET_REMOTE)
