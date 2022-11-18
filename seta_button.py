@@ -19,6 +19,7 @@ TESTING_DIR = os.path.join(PARENT_DIR,"seta_button_test")
 PAGES_OUTPUT_DIR = os.path.join(WORKING_DIR,"pages")
 TEMPLATES_DIR = os.path.join(WORKING_DIR,"page_templates")
 SUBMISSIONS_DIR = os.path.join(WORKING_DIR,"submissions")
+SUBMISSIONS_COPY_DIR = os.path.join(WORKING_DIR,"submissions_copy")
 PROJECT_DIR = os.path.join(WORKING_DIR,"project_files")
 FINAL_DIR = os.path.join(WORKING_DIR,"final")
 EXTRACT_DIR = os.path.join(os.path.join(WORKING_DIR,"submissions_copy","extract"))
@@ -152,6 +153,7 @@ def dataframe_rows_to_string(df,team=""):
 def rename_downloaded_submission_files(submittor_list=[],team="",download_path="submissions_copy"):
 	for submittor in submittor_list:
 		rename_string = f"mv {download_path}/{submittor}*.zip {download_path}/{submittor}_{team}.zip"
+		logging.info(f"TERMINAL COMMAND: {rename_string}")
 		subprocess.call(rename_string, shell=True)
 
 
@@ -163,13 +165,15 @@ def unzip_and_move(submittor_list=[],team="",download_path="submissions_copy", e
 		if submissions > 1:
 			print(f"Here are {submittor}_{team}'s files")
 			unzip_peek_string = f"unzip -l {download_path}/{submittor}_{team}.zip"
+			logging.info(f"TERMINAL COMMAND: {unzip_peek_string}")
 			subprocess.call(unzip_peek_string,shell=True)
 			carry_on = input(f"Do you want to include {submittor}_{team}'s files in the document? [Y]es or [N]o: ")
 			if carry_on.lower() == "yes" or carry_on.lower() == 'y':
 				print(f"including {submittor}_{team}")
 				pass
 			else: continue
-		unzip_string = f"unzip -joq {download_path}/{submittor}_{team}.zip -d {extract_path}/{team}" 
+		unzip_string = f"unzip -joq {download_path}/{submittor}_{team}.zip -d {extract_path}" 
+		logging.info(f"TERMINAL COMMAND: {unzip_string}")
 		subprocess.call(unzip_string, shell=True)
 		# print(unzip_string)
 
@@ -179,7 +183,7 @@ if __name__ == "__main__":
 	try:
 		class_spreadsheet_object = get_spreadsheet(PREDICT_SOURCE_SPREADSHEET)
 	except Exception as e:
-		logging.log(e)
+		logging.info(e)
 		print("Did you forget to provide a spreadheet name as argument?")
 
 	student_list_worksheet_object = get_worksheet_by_title(class_spreadsheet_object,STUDENT_LIST_WORKSHEET_REMOTE)
@@ -203,6 +207,7 @@ if __name__ == "__main__":
 
 
 	print("Making pages and pages_complete directory")
+	logging.info(f"TERMINAL COMMAND: mkdir pages pages_complete")
 	subprocess.call("mkdir pages pages_complete", shell=True)
 	for team in teams_list:
 		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
@@ -211,17 +216,20 @@ if __name__ == "__main__":
 		print("-------------")
 
 		print("Making pages and pages_complete directory")
+		logging.info(f"TERMINAL COMMAND: mkdir pages_complete/{team}")
 		subprocess.call(f"mkdir pages_complete/{team}", shell=True)
+		
 		'''make team directory'''
 		print(f"making directory for {team}")
 		team_directory_string = "mkdir " + os.path.join(PROJECT_DIR,team)
+		logging.info(f"TERMINAL COMMAND: {team_directory_string}")
 		subprocess.call(team_directory_string, shell=True)
 
 		'''Make student and submission zips '''
 		team_submittor_list = filter_dataframe_by_value(submittor_df,'Team',team)['USER ID'].tolist()
 		rename_downloaded_submission_files(submittor_list=team_submittor_list,team=team)
 		extract_path = os.path.join(EXTRACT_DIR,team)
-		unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=SUBMISSIONS_DIR,extract_path=extract_path)
+		unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=SUBMISSIONS_COPY_DIR,extract_path=extract_path)
 
 		# '''Get valid submissions file list'''
 		# files_dictionary = files_helper.get_files(team=team)

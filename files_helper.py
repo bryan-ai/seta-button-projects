@@ -14,6 +14,7 @@ logging.basicConfig(filename='logging.log', encoding='utf-8', level=logging.DEBU
 
 def setup():
     setup_string = f"./setup.sh"
+    logging.info(f"TERMINAL COMMAND: {setup_string}")
     subprocess.call(setup_string, shell=True)
 
 def get_files(team="",files_path=EXTRACT_DIR):
@@ -39,6 +40,7 @@ def get_files(team="",files_path=EXTRACT_DIR):
                     accepted_file_dictionary[filetype].append(file)
             else:
                 logging.info(f"removing {file}")
+                logging.info(f"TERMINAL COMMAND: rm -f {os.path.join(files_path,team,file)}")
                 subprocess.call(["rm","-f",os.path.join(files_path,team,file)])
         except Exception as e:
             print(e, "WARNING: Could not get filetype - suspect no file extension")
@@ -51,6 +53,7 @@ def get_files(team="",files_path=EXTRACT_DIR):
         if open_finder.lower() == "yes" or open_finder.lower() == 'y':
             folder_to_show = os.path.join(files_path,team)
             print(f"opening {folder_to_show}")
+            logging.info(f"TERMINAL COMMAND: open -R {folder_to_show}")
             subprocess.call(["open", "-R", folder_to_show])
             continue_string = input("When you have dealt with the files, press Enter to continue")
     return accepted_file_dictionary
@@ -72,6 +75,7 @@ def lower_file_extension_case(team="",filename="", input_path=EXTRACT_DIR, outpu
     input_file_path = os.path.join(input_path,team,filename)
     output_file_path = os.path.join(output_path,team,filename.lower())
     print(f"Renaming {filename} to {filename.lower()}")
+    logging.info(f"TERMINAL COMMAND: mv {input_file_path} {output_file_path}")
     subprocess.run(["mv", input_file_path,output_file_path])
 
 def jpeg_to_png(team="",input_path=EXTRACT_DIR, output_path=EXTRACT_DIR):
@@ -80,6 +84,7 @@ def jpeg_to_png(team="",input_path=EXTRACT_DIR, output_path=EXTRACT_DIR):
     output_file_path = os.path.join(output_path, team, "4images.png")
     logging.info(input_file_path)
     logging.info(output_file_path)
+    logging.info(f"TERMINAL COMMAND: magick {input_file_path} {output_file_path}")
     subprocess.call(["magick", input_file_path, output_file_path])
 
 
@@ -87,7 +92,8 @@ def png_to_pdf(team="",input_path=EXTRACT_DIR, output_path=EXTRACT_DIR):
 
     input_file_path = os.path.join(input_path, team, "*.png")
     output_file_path = os.path.join(output_path, team, "4images.pdf")
-    logging.info(" ".join(["magick", input_file_path, output_file_path]))
+    terminal_string = ' '.join(["magick", input_file_path, output_file_path])
+    logging.info(f"TERMINAL COMMAND: {terminal_string}")
     subprocess.call(["magick", input_file_path, output_file_path])
 
 def ipynb_to_pdf(team="", file_list=[], input_path=EXTRACT_DIR, output_path=EXTRACT_DIR):
@@ -97,7 +103,8 @@ def ipynb_to_pdf(team="", file_list=[], input_path=EXTRACT_DIR, output_path=EXTR
         ipynb_home_dir=os.path.join(input_path,file)
         logging.info(f"html_ouptu_dir is {ipynb_home_dir}")
         logging.info(f"output_path is {output_path}")
-        logging.info(" ".join(["jupyter-nbconvert", "--to","html","--template","portfolio",ipynb_home_dir]))
+        terminal_string = " ".join(["jupyter-nbconvert", "--to","html","--template","portfolio",ipynb_home_dir])
+        logging.info("TERMINAL COMMAND: {terminal_string}")
         subprocess.call(["jupyter-nbconvert", "--to","html","--template","portfolio",ipynb_home_dir])
         logging.info(file_list)
 
@@ -108,6 +115,7 @@ def ipynb_to_pdf(team="", file_list=[], input_path=EXTRACT_DIR, output_path=EXTR
         logging.info(f"html_input_path is {html_input_path}")
         logging.info(f"pdf_output_path is {pdf_output_path}")
         string = " ".join(["wkhtmltopdf", wkhtmltopdf_flag_string,html_input_path,pdf_output_path])
+        logging.info("TERMINAL COMMAND: {string}")
         subprocess.run(["wkhtmltopdf","-s","A4","--print-media-type", "--disable-smart-shrinking","--margin-top","15mm","--margin-bottom","15mm","--margin-left","15mm","--margin-right","15mm","--no-background", html_input_path,pdf_output_path])
 
 
@@ -121,9 +129,10 @@ def pptx_to_pdf_helper(team="",file_list=[],input_path=EXTRACT_DIR, output_path=
         file_rename = os.path.join(input_path,team,"2"+filename)
         print(f"Renaming {filename} to 2{filename}")
         try:
+            logging.info("TERMINAL COMMAND: mv {file_to_show} {file_rename}")
             subprocess.call(["mv",file_to_show,file_rename])
             file_to_show = file_rename
-        except Exception(e):
+        except Exception as e:
             logging.info(e) 
             print(f"ERROR: Could not rename {file_rename} perhaps the files is already renamed?")
             file_renamed = True
@@ -131,6 +140,7 @@ def pptx_to_pdf_helper(team="",file_list=[],input_path=EXTRACT_DIR, output_path=
         open_finder=input("Would you like to open a finder window for the team's submission? [Y]es or [N]o: ")
         if open_finder.lower() == "yes" or open_finder.lower() == 'y':
             # file_to_show = os.path.join(input_path,team,filename)
+            logging.info("TERMINAL COMMAND: open -R {file_to_show}")
             subprocess.call(["open", "-R", file_to_show])
             pass
         else: 
@@ -142,6 +152,7 @@ def pdf_mover(team="",filetype="",file_list=[], input_path=EXTRACT_DIR, output_p
         original_file_path = os.path.join(input_path,team,file)
         new_file_path = os.path.join(output_path,team,file)
         print(f"Moving {file} to {new_file_path}")
+        logging.info("TERMINAL COMMAND: mv {original_file_path} {new_file_path}")
         subprocess.run(["mv", original_file_path,new_file_path])
 
 def multi_file_helper(team="",filename="", filetype="pdf",input_path=EXTRACT_DIR, output_path=EXTRACT_DIR):
@@ -161,21 +172,25 @@ def multi_file_helper(team="",filename="", filetype="pdf",input_path=EXTRACT_DIR
     if mv_or_open.lower() == "yes" or mv_or_open.lower() == 'y':
         file_to_show = os.path.join(input_path,team,filename)
         try:
+            logging.info("TERMINAL COMMAND: open -R {file_to_show}")
             subprocess.call(["open", "-R", file_to_show])
-        except Exception(e):
+        except Exception as e:
             logging.info(e)
             print("WARNING: Could not find file, opening folder instead")
             folder_to_show =os.path.join(input_path,team)
+            logging.info("TERMINAL COMMAND: open -R {file_to_show}")
             subprocess.call(["open", "-R", file_to_show])
         pass
     elif mv_or_open.isdigit():
         if int(mv_or_open) < 8:
             file_rename = os.path.join(input_path,team,mv_or_open+filename)
             print(f"renaming {filename} to {mv_or_open}{filename}")
+            logging.info("TERMINAL COMMAND: mv {file_to_show} {file_rename}")
             subprocess.call(["mv", file_to_show,file_rename])
             print(f"continuing")
         elif int(mv_or_open) == 9:
             print(f"Deleting {file_to_show}")
+            logging.info("TERMINAL COMMAND: rm -f {file_to_show} {file_rename}")
             subprocess.call(["rm","-f", file_to_show])
 
 if __name__ == "__main__":
