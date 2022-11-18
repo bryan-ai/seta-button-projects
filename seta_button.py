@@ -17,6 +17,7 @@ PARENT_DIR = WORKING_DIR.parent.absolute()
 TESTING_DIR = os.path.join(PARENT_DIR,"seta_button_test")
 PAGES_OUTPUT_DIR = os.path.join(WORKING_DIR,"pages")
 TEMPLATES_DIR = os.path.join(WORKING_DIR,"page_templates")
+SUBMISSIONS_DIR = os.path.join(WORKING_DIR,"submissions")
 PROJECT_DIR = os.path.join(WORKING_DIR,"project_files")
 FINAL_DIR = os.path.join(WORKING_DIR,"final")
 EXTRACT_DIR = os.path.join(os.path.join(WORKING_DIR,"submissions_copy","extract"))
@@ -215,7 +216,7 @@ if __name__ == "__main__":
 		team_submittor_list = filter_dataframe_by_value(submittor_df,'Team',team)['USER ID'].tolist()
 		rename_downloaded_submission_files(submittor_list=team_submittor_list,team=team)
 		extract_path = os.path.join(EXTRACT_DIR,team)
-		unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=,extract_path=extract_path)
+		unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=SUBMISSIONS_DIR,extract_path=extract_path)
 
 		# '''Get valid submissions file list'''
 		# files_dictionary = files_helper.get_files(team=team)
