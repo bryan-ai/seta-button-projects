@@ -1,4 +1,3 @@
-from fpdf import FPDF
 import pandas as pd
 import os
 from pathlib import Path
@@ -94,7 +93,7 @@ def png_to_pdf(team="",input_path=EXTRACT_DIR, output_path=EXTRACT_DIR):
 def ipynb_to_pdf(team="", file_list=[], input_path=EXTRACT_DIR, output_path=EXTRACT_DIR):
     wkhtmltopdf_flag_string = "-q -s A4 --print-media-type --disable-smart-shrinking --margin-top 15mm --margin-bottom 15mm --margin-left 15mm --margin-right 15mm --no-background"
     for file in file_list:
-        print(f"Converting all {team} ipynbs to html")
+        print(f"Converting {team}'s {file} to html")
         ipynb_home_dir=os.path.join(input_path,file)
         logging.info(f"html_ouptu_dir is {ipynb_home_dir}")
         logging.info(f"output_path is {output_path}")
