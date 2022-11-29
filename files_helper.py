@@ -115,7 +115,7 @@ def ipynb_to_pdf(team="", file_list=[], input_path=EXTRACT_DIR, output_path=EXTR
         logging.info(f"html_input_path is {html_input_path}")
         logging.info(f"pdf_output_path is {pdf_output_path}")
         string = " ".join(["wkhtmltopdf", wkhtmltopdf_flag_string,html_input_path,pdf_output_path])
-        logging.info("TERMINAL COMMAND: {string}")
+        logging.info(f"TERMINAL COMMAND: {string}")
         subprocess.run(["wkhtmltopdf","-s","A4","--print-media-type", "--disable-smart-shrinking","--margin-top","15mm","--margin-bottom","15mm","--margin-left","15mm","--margin-right","15mm","--no-background", html_input_path,pdf_output_path])
 
 
