@@ -22,7 +22,7 @@ SUBMISSIONS_DIR = os.path.join(WORKING_DIR,"submissions")
 SUBMISSIONS_COPY_DIR = os.path.join(WORKING_DIR,"submissions_copy")
 PROJECT_DIR = os.path.join(WORKING_DIR,"project_files")
 FINAL_DIR = os.path.join(WORKING_DIR,"final")
-EXTRACT_DIR = os.path.join(os.path.join(WORKING_DIR,"submissions_copy","extract"))
+EXTRACT_DIR = os.path.join(os.path.join(WORKING_DIR,"extract"))
 
 
 CREDENTIALS_DIR = os.path.join(WORKING_DIR,"credentials")
@@ -42,9 +42,8 @@ MARKS_SUMMARY_REMOTE = "[imported] predict_marks_summary"
 COMMENTS_REMOTE = "[Imported] project_comments"
 SERVICE_FILE = os.path.join(CREDENTIALS_DIR,"bryan-athena-scraper-0c8981cd98b3.json")
 #TODO make the students do this: build an uploader that asks for all the data, and pdf versions
-#TODO PRIORITY1 clean up input_path and output_path arguments. they're too confusing and inconsistent. 
-# i.e. the calling code should decide the directory, the called function should append only the filename.
-#TODO your had to make a custom template to account for making too many Mathjax github calls
+
+#TODO Convert to separate tasks: First Extract and choose. Then clean and verify. Then convert. Then move PDFs
 
 ''' function authorise and open the connection to google sheets '''
 def get_spreadsheet(spreadsheet):
@@ -170,12 +169,35 @@ def unzip_and_move(submittor_list=[],team="",download_path="submissions_copy", e
 			carry_on = input(f"Do you want to include {submittor}_{team}'s files in the document? [Y]es or [N]o: ")
 			if carry_on.lower() == "yes" or carry_on.lower() == 'y':
 				print(f"including {submittor}_{team}")
-				pass
+				# Leave out the -o flag to give user options to skip, replace, or keep both files
+				unzip_string = f"unzip -jq {download_path}/{submittor}_{team}.zip -d {extract_path}" 
+				logging.info(f"TERMINAL COMMAND: {unzip_string}")
+				subprocess.call(unzip_string, shell=True)
+				continue
 			else: continue
 		unzip_string = f"unzip -joq {download_path}/{submittor}_{team}.zip -d {extract_path}" 
 		logging.info(f"TERMINAL COMMAND: {unzip_string}")
 		subprocess.call(unzip_string, shell=True)
 		# print(unzip_string)
+
+def check_for_zips():
+	file_list = os.listdir(SUBMISSIONS_COPY_DIR)
+	filetype_list = []
+	for file in file_list:
+		if len(file.split(".")) == 1:
+			filetype_list.append("unknown")
+		else:
+			filetype_list.append(file.split(".")[1])
+	filetype_set = set(filetype_list)
+	if len(filetype_set)!=1:
+		print(f"The submission directory contains {len(filetype_set)} filetypes: {filetype_set}. The directory should contain only zips or only one '.' in the filename. Please attend to these manually")
+		open_finder=input(f"Would you like to open a finder window for the submission? [Y]es or [N]o: \n")
+		if open_finder.lower() == "yes" or open_finder.lower() == 'y':
+			folder_to_show = SUBMISSIONS_COPY_DIR
+			print(f"opening {folder_to_show}")
+			logging.info(f"TERMINAL COMMAND: open -R {folder_to_show}")
+			subprocess.call(["open", "-R", folder_to_show])
+			continue_string = input("When you have dealt with the files, press Enter to continue")
 
 
 if __name__ == "__main__":
@@ -205,6 +227,7 @@ if __name__ == "__main__":
 	'''create dataframe of submittors'''
 	submittor_df = filter_dataframe_by_value(student_list_dataframe,'Submitted',"Download")
 
+	check_for_zips()
 
 	print("Making pages and pages_complete directory")
 	logging.info(f"TERMINAL COMMAND: mkdir pages pages_complete")
@@ -221,47 +244,52 @@ if __name__ == "__main__":
 		
 		'''make team directory'''
 		print(f"making directory for {team}")
-		team_directory_string = "mkdir " + os.path.join(PROJECT_DIR,team)
+		team_files_pdf_path = os.path.join(PROJECT_DIR,team)
+		team_files_extracted_path = os.path.join(EXTRACT_DIR,team)
+		team_directory_string = "mkdir " + team_files_pdf_path
 		logging.info(f"TERMINAL COMMAND: {team_directory_string}")
 		subprocess.call(team_directory_string, shell=True)
 
 		'''Make student and submission zips '''
 		team_submittor_list = filter_dataframe_by_value(submittor_df,'Team',team)['USER ID'].tolist()
 		rename_downloaded_submission_files(submittor_list=team_submittor_list,team=team)
-		extract_path = os.path.join(EXTRACT_DIR,team)
-		unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=SUBMISSIONS_COPY_DIR,extract_path=extract_path)
-
-		# '''Get valid submissions file list'''
-		# files_dictionary = files_helper.get_files(team=team)
-		# filetypes_list = list(files_dictionary)
-		# for filetype in filetypes_list:
-		# 	for filename in files_dictionary[filetype]:
-		# 		if filename.split('.')[1].isupper():
-		# 			files_helper.lower_file_extension_case(team=team, filename=filename,input_path=EXTRACT_DIR,output_path=EXTRACT_DIR)
-		# '''Check for Duplicates, clean, and convert jpeg ot png'''
-		# filetypes_list = list(files_dictionary)
-		# for filetype in filetypes_list:
-		# 	if(filetype != "png") and (filetype!="jpeg") and (len(files_dictionary[filetype])>1):
-		# 		for filename in files_dictionary[filetype]:
-		# 			files_helper.multi_file_helper(team=team, filename=filename, filetype=filetype)
-		# 	if(filetype == "jpeg"):
-		# 		files_helper.jpeg_to_png(team=team,input_path=EXTRACT_DIR,output_path=EXTRACT_DIR)
 		
-		# '''Update valid submissions file lists'''
-		# files_dictionary = files_helper.get_files(team=team)
-		# filetypes_list = list(files_dictionary)
+		unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=SUBMISSIONS_COPY_DIR,extract_path=team_files_extracted_path)
 
-		# for filetype in filetypes_list:
-		# 	if filetype != "pdf":
-		#		files_input_path = os.path.join()
-		# 		files_helper.files_converter_helper(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=EXTRACT_DIR,output_path=PROJECT_DIR)
+		'''Get valid submissions file list'''
+		print
+		files_dictionary = files_helper.get_files(team=team,files_path=team_files_extracted_path)
+		print(f"Cleaning {team}'s folder. Please see logs for details of files removed")
+		filetypes_list = list(files_dictionary)
+		for filetype in filetypes_list:
+			for filename in files_dictionary[filetype]:
+				if filename.split('.')[1].isupper():
+					files_helper.lower_file_extension_case(team=team, filename=filename,input_path=team_files_extracted_path,output_path=team_files_extracted_path)
+		'''Check for Duplicates, clean, and convert jpeg ot png'''
+		filetypes_list = list(files_dictionary)
+		for filetype in filetypes_list:
+			if(filetype != "png") and (filetype!="jpeg") and (len(files_dictionary[filetype])>1):
+				for filename in files_dictionary[filetype]:
+					files_helper.multi_file_helper(team=team, filename=filename, filetype=filetype,input_path=team_files_extracted_path)
+			if(filetype == "jpeg"):
+				files_helper.jpeg_to_png(team=team,input_path=team_files_extracted_path,output_path=team_files_extracted_path)
+		
+		'''Update valid submissions file lists'''
+		files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
+		filetypes_list = list(files_dictionary)
 
-		# '''Update valid submissions file lists to check if all files are now pdf'''
-		# files_dictionary = files_helper.get_files(team=team)
-		# filetypes_list = list(files_dictionary)
-		# for filetype in filetypes_list:
-		# 	if filetype == "pdf":
-		# 		files_helper.pdf_mover(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=EXTRACT_DIR,output_path=PROJECT_DIR)
+		for filetype in filetypes_list:
+			print(f"Converting file to pdf. filetype is {filetype} from filestype_list")
+			if filetype != "pdf":
+				#TODO Figure out the input path for this section and for files_converter_helper
+				files_helper.files_converter_helper(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
+
+		'''Update valid submissions file lists to check if all files are now pdf'''
+		files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
+		filetypes_list = list(files_dictionary)
+		for filetype in filetypes_list:
+			if filetype == "pdf":
+				files_helper.pdf_mover(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
 					
 		
 
@@ -301,22 +329,14 @@ if __name__ == "__main__":
 		pages_output_path =os.path.join(PROJECT_DIR,team)
 		files_helper.ipynb_to_pdf(team=team,file_list=[cover_page_filename,students_page_filename,comments_page_filename],input_path=PAGES_OUTPUT_DIR, output_path=pages_output_path)
 	
-	# # 	'''Convert to html'''
-	# 	print(f"Converting all {team} ipynbs to html")
-	# 	nbconvert_string = f"jupyter-nbconvert --to html {PAGES_OUTPUT_DIR}/* "
-	# 	subprocess.call(nbconvert_string, shell=True)
-	# 	move_ipynb_string = "mv pages/*.ipynb pages_complete/"
-	# 	print(f"Moving all {team} ipynbs to pages_complete folder")
-	# 	subprocess.call(move_ipynb_string, shell=True)
-	# 	file_list = os.listdir("pages") 
-	# 	# print(file_list)
-	# 	wkhtmltopdf_flag_string = "-q -s A4 --print-media-type --disable-smart-shrinking --margin-top 15mm --margin-bottom 15mm --margin-left 15mm --margin-right 15mm --no-background "
-	# 	for file in file_list:
-	# 		print(f"Converting {file} to pdf")
-	# 		wkhtmltopdf_string = f"wkhtmltopdf {wkhtmltopdf_flag_string} {PAGES_OUTPUT_DIR}/{file} {PROJECT_DIR}/{team}/{file.split('.')[0]}.pdf"
-	# 		# print(wkhtmltopdf_string)
-	# 		print(f"moving {file}  to pages_complete folder")
-	# 		subprocess.call(wkhtmltopdf_string, shell=True)
-	# 		move_ipynb_string = f"mv pages/{file} pages_complete/"
-	# 		subprocess.call(move_ipynb_string, shell=True)
+	# Finally, move all pdfs
+	for team in teams_list:
+		'''Update valid submissions file lists to check if all files are now pdf'''
+		files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
+		filetypes_list = list(files_dictionary)
+		for filetype in filetypes_list:
+			if filetype == "pdf":
+				files_helper.pdf_mover(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
+
+		
 
