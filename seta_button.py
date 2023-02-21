@@ -231,7 +231,7 @@ if __name__ == "__main__":
 	submittor_df = filter_dataframe_by_value(student_list_dataframe,'Submitted',"Download")
 
 	check_for_zips()
-	teams_list = ["CBB1, CW3"]
+	teams_list = ["GM4", "CW3"]
 	print("Making pages and pages_complete directory")
 	for team in teams_list:
 		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
@@ -258,7 +258,6 @@ if __name__ == "__main__":
 		unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=SUBMISSIONS_COPY_DIR,extract_path=team_files_extracted_path)
 
 		'''Get valid submissions file list'''
-		print
 		files_dictionary = files_helper.get_files(team=team,files_path=team_files_extracted_path)
 		print(f"Cleaning {team}'s folder. Please see logs for details of files removed")
 		filetypes_list = list(files_dictionary)

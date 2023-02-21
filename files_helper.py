@@ -115,7 +115,8 @@ def ipynb_to_pdf(team="", file_list=[], input_path=WORKING_DIR, output_path=WORK
     
         print(f"Converting {file.split('.')[0]}.html to pdf")
         html_input_path = os.path.join(input_path,f"{file.split('.')[0]}.html")
-        pdf_output_path = os.path.join(output_path,f"{file.split('.')[0]}.pdf")
+        '''prepend a 3 to pdf for later'''
+        pdf_output_path = os.path.join(output_path,f"3{file.split('.')[0]}.pdf")
         logging.info(f"html_input_path is {html_input_path}")
         logging.info(f"pdf_output_path is {pdf_output_path}")
         string = " ".join(["wkhtmltopdf", wkhtmltopdf_flag_string,html_input_path,pdf_output_path])
