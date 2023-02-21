@@ -231,7 +231,7 @@ if __name__ == "__main__":
 	submittor_df = filter_dataframe_by_value(student_list_dataframe,'Submitted',"Download")
 
 	check_for_zips()
-	teams_list = ["GM4", "CW3"]
+	teams_list = ["CW3"]
 	print("Making pages and pages_complete directory")
 	for team in teams_list:
 		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
