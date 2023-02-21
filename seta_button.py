@@ -117,6 +117,7 @@ def create_comments_page(comments_dict={}, template_path=TEMPLATES_DIR, output_p
 	comments_page_string = comments_page_string.replace("{{Marker 1}}",comments_dict['Marker 1'])
 	comments_page_string = comments_page_string.replace("{{Marker 2}}",comments_dict['Marker 2'])
 	comments_page_string = comments_page_string.replace("{{Notebook}}",comments_dict['Notebook'])
+	comments_page_string = comments_page_string.replace("{{Additional notes}}",comments_dict['Additional notes'])
 	comments_page_string = comments_page_string.replace("{{App}}",comments_dict['App'])
 	comments_page_filename = f"7{comments_dict['team']}_comments_page.ipynb"
 	comments_page_path = os.path.join(output_path,comments_page_filename)
