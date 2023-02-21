@@ -65,7 +65,7 @@ def get_worksheet_by_title(sh, worksheet):
 def export_worksheet_to_dataframe(worksheet):
 	print(f"exporting {worksheet} to dataframe")
 	df = worksheet.get_as_df()
-	return df[df.ATHENA !="Dropped"]
+	return df
 
 '''function to filter dataframe by any given value in any given column'''
 def filter_dataframe_by_value(df, filter_col, filter_value):
@@ -217,7 +217,7 @@ if __name__ == "__main__":
 
 	'''Create Dataframe from student list worksheet and remove rows labeled as Dropped or Faculty'''
 	student_list_dataframe = export_worksheet_to_dataframe(student_list_worksheet_object)
-	print(student_list_dataframe)
+	student_list_dataframe=student_list_dataframe[student_list_dataframe.ATHENA !="Dropped"]
 
 	
 	team_list_dataframe = export_worksheet_to_dataframe(teams_list_worksheet_object)
@@ -231,7 +231,7 @@ if __name__ == "__main__":
 	submittor_df = filter_dataframe_by_value(student_list_dataframe,'Submitted',"Download")
 
 	check_for_zips()
-
+	teams_list = ["CBB1, CW3"]
 	print("Making pages and pages_complete directory")
 	for team in teams_list:
 		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
@@ -301,7 +301,6 @@ if __name__ == "__main__":
 		students_string = dataframe_rows_to_string(students_df[['Name']])
 		cover_dict = {"team": team, "project":team_name_df['Project'].iloc[0], "mark":team_name_df['Mark'].iloc[0], "members":students_string}
 		print(f"Generating cover page for {team}")
-		#TODO Figure out how to use these properly. Right now you need to figure out the correct paths to find the ipynbs, convert to html, and then convert to pdf
 		cover_page_filename, cover_page_path=create_cover_page(cover_dict)
 		
 

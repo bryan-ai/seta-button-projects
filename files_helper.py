@@ -10,7 +10,7 @@ import logging
 WORKING_DIR = Path(os.getcwd())
 
 logging.basicConfig(filename='logging.log', encoding='utf-8', level=logging.DEBUG)
-#TODO figure out why ipybn isn't getting a 3
+
 def setup():
     setup_string = f"./setup.sh"
     logging.info(f"TERMINAL COMMAND: {setup_string}")
@@ -47,7 +47,7 @@ def get_files(team="",files_path=WORKING_DIR):
             blank_files = True
             continue
     
-    #Accounting for IPYNBs that were not labelled as such, that you manually rename, and have not been converted to PDF. e.g. AE5
+    '''Accounting for IPYNBs that were not labelled as such, that you manually rename, and have not been converted to PDF. e.g. AE5'''
     if blank_files:
         print(f"WARNING: Team {team} submitted at least 1 file of unknown type. I need your help to identify any important files and add the filetype, or delete the irrelavent files.")
         open_finder=input(f"Would you like to open a finder window for team {team}'s submission? [Y]es or [N]o: \n")
