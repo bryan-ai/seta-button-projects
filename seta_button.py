@@ -17,6 +17,7 @@ ZIP_DIR = os.path.join(WORKING_DIR,"zips")
 PARENT_DIR = WORKING_DIR.parent.absolute()
 TESTING_DIR = os.path.join(PARENT_DIR,"seta_button_test")
 PAGES_OUTPUT_DIR = os.path.join(WORKING_DIR,"pages")
+PAGES_COMPLETE_DIR = os.path.join(WORKING_DIR,"pages_complete")
 TEMPLATES_DIR = os.path.join(WORKING_DIR,"page_templates")
 SUBMISSIONS_DIR = os.path.join(WORKING_DIR,"submissions")
 SUBMISSIONS_COPY_DIR = os.path.join(WORKING_DIR,"submissions_copy")
@@ -64,7 +65,7 @@ def get_worksheet_by_title(sh, worksheet):
 def export_worksheet_to_dataframe(worksheet):
 	print(f"exporting {worksheet} to dataframe")
 	df = worksheet.get_as_df()
-	return df
+	return df[df.ATHENA !="Dropped"]
 
 '''function to filter dataframe by any given value in any given column'''
 def filter_dataframe_by_value(df, filter_col, filter_value):
@@ -215,6 +216,7 @@ if __name__ == "__main__":
 
 	'''Create Dataframe from student list worksheet and remove rows labeled as Dropped or Faculty'''
 	student_list_dataframe = export_worksheet_to_dataframe(student_list_worksheet_object)
+	print(student_list_dataframe)
 
 	
 	team_list_dataframe = export_worksheet_to_dataframe(teams_list_worksheet_object)
@@ -230,17 +232,15 @@ if __name__ == "__main__":
 	check_for_zips()
 
 	print("Making pages and pages_complete directory")
-	logging.info(f"TERMINAL COMMAND: mkdir pages pages_complete")
-	subprocess.call("mkdir pages pages_complete", shell=True)
 	for team in teams_list:
 		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
 		print("-------------")
 		print(f"TEAM {team}")
 		print("-------------")
-
+		pages_complete_team_dir = os.path.join(PAGES_COMPLETE_DIR,team)
 		print("Making pages and pages_complete directory")
-		logging.info(f"TERMINAL COMMAND: mkdir pages_complete/{team}")
-		subprocess.call(f"mkdir pages_complete/{team}", shell=True)
+		logging.info(f"TERMINAL COMMAND: mkdir {pages_complete_team_dir}")
+		subprocess.call(["mkdir", pages_complete_team_dir])
 		
 		'''make team directory'''
 		print(f"making directory for {team}")
@@ -308,7 +308,7 @@ if __name__ == "__main__":
 		print(f"Extracting {team} rows into students page dictionary")
 		team_df = filter_dataframe_by_value(team_list_dataframe,'Team', team)
 		students_df = filter_dataframe_by_value(student_list_dataframe,'Team', team)
-		individual_string = dataframe_rows_to_string(students_df[['Name', 'Mark']])
+		individual_string = dataframe_rows_to_string(students_df[['Name', 'Mark', 'Problem']])
 		comment_string = dataframe_rows_to_string(team_df[['Notes']], team)
 		students_dict = {"team": team, "Notes": comment_string, "members":individual_string}
 		print(f"Generating indivuals page for {team}")
@@ -316,13 +316,15 @@ if __name__ == "__main__":
 		
 
 		'''Making comments page'''
+		#TODO make this column title agnostic?
 		print(f"Extracting {team} rows into students page dictionary")
 		comment_df = filter_dataframe_by_value(comments_dataframe,'Team', team)
 		marker_one_string = dataframe_rows_to_string(comment_df[['Marker 1']],team)
 		marker_two_string = dataframe_rows_to_string(comment_df[['Marker 2']],team)
 		marker_notebook_string = dataframe_rows_to_string(comment_df[['Notebook']],team)
+		marker_additional_string = dataframe_rows_to_string(comment_df[['Additional notes']],team)
 		marker_app_string = dataframe_rows_to_string(comment_df[['App']],team)
-		comments_dict = {"team": team, "Marker 1":marker_one_string, "Marker 2":marker_two_string,"Notebook":marker_notebook_string, "App":marker_app_string}
+		comments_dict = {"team": team, "Marker 1":marker_one_string, "Marker 2":marker_two_string,"Notebook":marker_notebook_string, "Additional notes":marker_additional_string, "App":marker_app_string}
 		comments_page_filename, comments_page_path=create_comments_page(comments_dict)
 		
 		'''convert pages to ipynb'''

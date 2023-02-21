@@ -10,7 +10,7 @@ import logging
 WORKING_DIR = Path(os.getcwd())
 
 logging.basicConfig(filename='logging.log', encoding='utf-8', level=logging.DEBUG)
-
+#TODO figure out why ipybn isn't getting a 3
 def setup():
     setup_string = f"./setup.sh"
     logging.info(f"TERMINAL COMMAND: {setup_string}")
@@ -70,7 +70,7 @@ def files_converter_helper(team="",filetype="",file_list=[], input_path=WORKING_
     #TODO you need to figure out how to direct users to issues
     
     if len(file_list) < 1:
-        print(f"No {file}s found")
+        print(f"No files found")
     elif len(file_list) > 0:
         if filetype=="png": 
             png_to_pdf(team=team,input_path=input_path,output_path=output_path)
@@ -102,12 +102,13 @@ def png_to_pdf(team="",input_path=WORKING_DIR, output_path=WORKING_DIR):
 def ipynb_to_pdf(team="", file_list=[], input_path=WORKING_DIR, output_path=WORKING_DIR):
     wkhtmltopdf_flag_string = "-q -s A4 --print-media-type --disable-smart-shrinking --margin-top 15mm --margin-bottom 15mm --margin-left 15mm --margin-right 15mm --no-background"
     for file in file_list:
+        #TODO rename and prepend the value 3 here somewhere
         print(f"Converting {team}'s {file} to html")
         ipynb_home_dir=os.path.join(input_path,file)
         logging.info(f"html_ouptu_dir is {ipynb_home_dir}")
         logging.info(f"output_path is {output_path}")
         terminal_string = " ".join(["jupyter-nbconvert", "--to","html","--template","portfolio",ipynb_home_dir])
-        logging.info("TERMINAL COMMAND: {terminal_string}")
+        logging.info(f"TERMINAL COMMAND: {terminal_string}")
         subprocess.call(["jupyter-nbconvert", "--to","html","--template","portfolio",ipynb_home_dir])
         logging.info(file_list)
 
@@ -132,7 +133,7 @@ def pptx_to_pdf_helper(team="",file_list=[],input_path=WORKING_DIR, output_path=
         file_rename = os.path.join(input_path,"2"+filename)
         print(f"Renaming {filename} to 2{filename}")
         try:
-            logging.info("TERMINAL COMMAND: mv {file_to_show} {file_rename}")
+            logging.info(f"TERMINAL COMMAND: mv {file_to_show} {file_rename}")
             subprocess.call(["mv",file_to_show,file_rename])
             file_to_show = file_rename
         except Exception as e:
@@ -143,7 +144,7 @@ def pptx_to_pdf_helper(team="",file_list=[],input_path=WORKING_DIR, output_path=
         open_finder=input("Would you like to open a finder window for the team's submission? [Y]es or [N]o: ")
         if open_finder.lower() == "yes" or open_finder.lower() == 'y':
             # file_to_show = os.path.join(input_path,team,filename)
-            logging.info("TERMINAL COMMAND: open -R {file_to_show}")
+            logging.info(f"TERMINAL COMMAND: open -R {file_to_show}")
             subprocess.call(["open", "-R", file_to_show])
             pass
         else: 
@@ -155,7 +156,7 @@ def pdf_mover(team="",filetype="",file_list=[], input_path=WORKING_DIR, output_p
         original_file_path = os.path.join(input_path,file)
         new_file_path = os.path.join(output_path,file)
         print(f"Moving {file} to {new_file_path}")
-        logging.info("TERMINAL COMMAND: mv {original_file_path} {new_file_path}")
+        logging.info(f"TERMINAL COMMAND: mv {original_file_path} {new_file_path}")
         subprocess.run(["mv", original_file_path,new_file_path])
 
 def multi_file_helper(team="",filename="", filetype="pdf",input_path=WORKING_DIR, output_path=WORKING_DIR):
@@ -175,25 +176,25 @@ def multi_file_helper(team="",filename="", filetype="pdf",input_path=WORKING_DIR
     if mv_or_open.lower() == "yes" or mv_or_open.lower() == 'y':
         file_to_show = os.path.join(input_path,filename)
         try:
-            logging.info("TERMINAL COMMAND: open -R {file_to_show}")
+            logging.info(f"TERMINAL COMMAND: open -R {file_to_show}")
             subprocess.call(["open", "-R", file_to_show])
         except Exception as e:
             logging.info(e)
             print("WARNING: Could not find file, opening folder instead")
             folder_to_show =os.path.join(input_path,team)
-            logging.info("TERMINAL COMMAND: open -R {file_to_show}")
+            logging.info(f"TERMINAL COMMAND: open -R {file_to_show}")
             subprocess.call(["open", "-R", file_to_show])
         pass
     elif mv_or_open.isdigit():
         if int(mv_or_open) < 8:
             file_rename = os.path.join(input_path,team,mv_or_open+filename)
             print(f"renaming {filename} to {mv_or_open}{filename}")
-            logging.info("TERMINAL COMMAND: mv {file_to_show} {file_rename}")
+            logging.info(f"TERMINAL COMMAND: mv {file_to_show} {file_rename}")
             subprocess.call(["mv", file_to_show,file_rename])
             print(f"continuing")
         elif int(mv_or_open) == 9:
             print(f"Deleting {file_to_show}")
-            logging.info("TERMINAL COMMAND: rm -f {file_to_show} {file_rename}")
+            logging.info(f"TERMINAL COMMAND: rm -f {file_to_show} {file_rename}")
             subprocess.call(["rm","-f", file_to_show])
 
 if __name__ == "__main__":
