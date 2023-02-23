@@ -17,7 +17,16 @@ def setup():
     subprocess.call(setup_string, shell=True)
 
 def get_files(team="",files_path=WORKING_DIR):
-    mylist = os.listdir(files_path)
+    #TODO find a better way to handle non submissions. This is an awful hack
+    try:
+        mylist = os.listdir(files_path)
+    except Exception as e:
+        logging.error(e)
+        print(f"No submission on record. Did {team} submit a zip file?")
+        print(f"Simulating a blank submission for {team}")
+        subprocess.call(["mkdir",files_path])
+        mylist=[]
+
     # rm_ipynb_string = "rm -rf pages/*.ipynb"
     # subprocess.call(rm_ipynb_string, shell=True)
     # # mylist = os.listdir("pages")
@@ -114,8 +123,7 @@ def ipynb_to_pdf(team="", file_list=[], input_path=WORKING_DIR, output_path=WORK
     
         print(f"Converting {file.split('.')[0]}.html to pdf")
         html_input_path = os.path.join(input_path,f"{file.split('.')[0]}.html")
-        '''prepend a 3 to pdf for later'''
-        pdf_output_path = os.path.join(output_path,f"3{file.split('.')[0]}.pdf")
+        pdf_output_path = os.path.join(output_path,f"{file.split('.')[0]}.pdf")
         logging.info(f"html_input_path is {html_input_path}")
         logging.info(f"pdf_output_path is {pdf_output_path}")
         string = " ".join(["wkhtmltopdf", wkhtmltopdf_flag_string,html_input_path,pdf_output_path])

@@ -163,6 +163,8 @@ def unzip_and_move(submittor_list=[],team="",download_path="submissions_copy", e
 	if submissions > 1:
 		print(f"Team {team} has {submissions} submissions by students with IDs {submittor_list}")
 	for submittor in submittor_list:
+		#TODO At this time, the user must make a decision about zip files before they know what is inside them. find a way to allow them to keep peeking until the user knows which one(s) they want
+			
 		if submissions > 1:
 			print(f"Here are {submittor}_{team}'s files")
 			unzip_peek_string = f"unzip -l {download_path}/{submittor}_{team}.zip"
@@ -231,8 +233,7 @@ if __name__ == "__main__":
 	submittor_df = filter_dataframe_by_value(student_list_dataframe,'Submitted',"Download")
 
 	check_for_zips()
-	teams_list = ["CW3"]
-	print("Making pages and pages_complete directory")
+
 	for team in teams_list:
 		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
 		print("-------------")
