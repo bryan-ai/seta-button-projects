@@ -169,7 +169,7 @@ def pdf_mover(team="",filetype="",file_list=[], input_path=WORKING_DIR, output_p
 
 def multi_file_helper(team="",filename="", filetype="pdf",input_path=WORKING_DIR, output_path=WORKING_DIR):
     file_to_show = os.path.join(input_path,filename)
-    print(f"team {team}'s folder has multiple {filetype} in their folder. I need your help to ensure their names help us merge the files in order.")
+    print(f"team {team}'s folder has one or more unlabelled {filetype} in their folder. I need your help to ensure their names help us merge the files in order.")
 
     print("1.Cover page")
     print("2.Presentation")
@@ -178,6 +178,7 @@ def multi_file_helper(team="",filename="", filetype="pdf",input_path=WORKING_DIR
     print("5.Student marks")
     print("6.Rubric")
     print("7.Comments")
+    print("8.Skip")
     print("9.Delete File")
     
     mv_or_open=input(f"Please choose {filename}'s position by selecting the number or delete the file by slecting 9 \nAlternatively, would you like to open a finder window for team {team}'s folder to rename them yourself? [1-9], [Y]es or [N]o: \n")
@@ -200,6 +201,8 @@ def multi_file_helper(team="",filename="", filetype="pdf",input_path=WORKING_DIR
             logging.info(f"TERMINAL COMMAND: mv {file_to_show} {file_rename}")
             subprocess.call(["mv", file_to_show,file_rename])
             print(f"continuing")
+        elif int(mv_or_open) == 7:
+            pass
         elif int(mv_or_open) == 9:
             print(f"Deleting {file_to_show}")
             logging.info(f"TERMINAL COMMAND: rm -f {file_to_show}")

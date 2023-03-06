@@ -265,14 +265,15 @@ def trim_and_identify_files(teams_list = []):
 				if filename.split('.')[1].isupper():
 					files_helper.lower_file_extension_case(team=team, filename=filename,input_path=team_files_extracted_path,output_path=team_files_extracted_path)
 		
-		'''Check for Duplicates, clean, and convert jpeg ot png'''
+		'''Convert jpeg ot png'''
 		filetypes_list = list(files_dictionary)
 		for filetype in filetypes_list:
-			if(filetype != "png") and (filetype!="jpeg") and (len(files_dictionary[filetype])>1):
-				for filename in files_dictionary[filetype]:
-					files_helper.multi_file_helper(team=team, filename=filename, filetype=filetype,input_path=team_files_extracted_path)
 			if(filetype == "jpeg"):
 				files_helper.jpeg_to_png(team=team,input_path=team_files_extracted_path,output_path=team_files_extracted_path)
+			'''Check for Duplicates, clean, and label'''
+			if((filetype != "png") and (len(files_dictionary[filetype])>1)) or ((filetype == "ipynb") and (len(files_dictionary[filetype])==1)):
+				for filename in files_dictionary[filetype]:
+					files_helper.multi_file_helper(team=team, filename=filename, filetype=filetype,input_path=team_files_extracted_path)
 	return 0
 
 def create_students_info_pages(teams_list=[]):
@@ -323,15 +324,33 @@ def create_students_info_pages(teams_list=[]):
 def convert_and_move_files(teams_list = []):
 		# Finally, move all pdfs
 		for team in teams_list:
-			print_team_header(team, process="Converting and moving files")
+			print_team_header(team, process="Converting")
 			team_files_extracted_path = os.path.join(EXTRACT_DIR,team)
 			team_files_pdf_path = os.path.join(PROJECT_DIR,team)
 			'''Update valid submissions file lists to check if all files are now pdf'''
 			files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
 			filetypes_list = list(files_dictionary)
+
 			for filetype in filetypes_list:
-				if filetype == "pdf":
-					files_helper.pdf_mover(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)	
+				print(f"Converting file to pdf. filetype is {filetype} from filestype_list")
+				if filetype != "pdf":
+					#TODO Figure out the input path for this section and for files_converter_helper
+					files_helper.files_converter_helper(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
+
+def move_pdfs(teams_list=[]):
+	# Finally, move all pdfs
+	for team in teams_list:
+		print_team_header(team, process="moving PDFs to report directory")
+		team_files_extracted_path = os.path.join(EXTRACT_DIR,team)
+		team_files_pdf_path = os.path.join(PROJECT_DIR,team)
+		'''Update valid submissions file lists to check if all files are now pdf'''
+		files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
+		filetypes_list = list(files_dictionary)
+		for filetype in filetypes_list:
+			if filetype == "pdf":
+				files_helper.pdf_mover(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
+
+
 
 def print_team_header(team = "", process=""):
 		print("-------------")
@@ -360,18 +379,6 @@ def verify_teams_have_submitted(teams_list = [],submittor_df = None):
 					case _:
 						print("Please enter 'y' for to refresh data or 'n' to skip to the next team")
 
-def move_pdfs():
-	# Finally, move all pdfs
-	for team in teams_list:
-		print_team_header(team, process="moving PDFs to report directory")
-		team_files_extracted_path = os.path.join(EXTRACT_DIR,team)
-		team_files_pdf_path = os.path.join(PROJECT_DIR,team)
-		'''Update valid submissions file lists to check if all files are now pdf'''
-		files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
-		filetypes_list = list(files_dictionary)
-		for filetype in filetypes_list:
-			if filetype == "pdf":
-				files_helper.pdf_mover(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
 
 if __name__ == "__main__":
 	student_list_dataframe, team_list_dataframe, marks_summary_dataframe, comments_dataframe, teams_list, submittor_df = populate_dataframes()
@@ -411,16 +418,7 @@ if __name__ == "__main__":
 
 
 		
-	# 	'''Update valid submissions file lists'''
-	# 	files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
-	# 	filetypes_list = list(files_dictionary)
-
-	# 	for filetype in filetypes_list:
-	# 		print(f"Converting file to pdf. filetype is {filetype} from filestype_list")
-	# 		if filetype != "pdf":
-	# 			#TODO Figure out the input path for this section and for files_converter_helper
-	# 			files_helper.files_converter_helper(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
-
+	
 	# 	'''Update valid submissions file lists to check if all files are now pdf'''
 	# 	files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
 	# 	filetypes_list = list(files_dictionary)
@@ -431,10 +429,7 @@ if __name__ == "__main__":
 		
 
 
-		
-	# 	'''convert pages to html'''
-	# 	pages_output_path =os.path.join(PROJECT_DIR,team)
-	# 	files_helper.ipynb_to_pdf(team=team,file_list=[cover_page_filename,students_page_filename,comments_page_filename],input_path=PAGES_OUTPUT_DIR, output_path=pages_output_path)
+
 
 
 		
