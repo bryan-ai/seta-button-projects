@@ -21,25 +21,16 @@ PAGES_COMPLETE_DIR = os.path.join(WORKING_DIR,"pages_complete")
 TEMPLATES_DIR = os.path.join(WORKING_DIR,"page_templates")
 SUBMISSIONS_DIR = os.path.join(WORKING_DIR,"submissions")
 SUBMISSIONS_COPY_DIR = os.path.join(WORKING_DIR,"submissions_copy")
-PROJECT_DIR = os.path.join(WORKING_DIR,"project_files")
+PROJECT_DIR = os.path.join(WORKING_DIR,"project_report_files")
 FINAL_DIR = os.path.join(WORKING_DIR,"final")
 EXTRACT_DIR = os.path.join(os.path.join(WORKING_DIR,"extract"))
 
-
 CREDENTIALS_DIR = os.path.join(WORKING_DIR,"credentials")
-# print(WORKING_DIR)
-# print(PARENT_DIR)
-# print(TESTING_DIR)
-# print(PAGES_OUTPUT_DIR)
-# STUDENT_LIST = os.path.join(WORKING_DIR,"student_list.csv")
-# EVIDENCE_ITEMS = os.path.join(TESTING_DIR,"evidence_items.csv")
-# TEAM_LIST = os.path.join(WORKING_DIR,"team_list.csv")
-
 
 PREDICT_SOURCE_SPREADSHEET = sys.argv[1]
 STUDENT_LIST_WORKSHEET_REMOTE = "student_list"
 TEAM_LIST_WORKSHEET_REMOTE = "team_list"
-MARKS_SUMMARY_REMOTE = "[imported] predict_marks_summary"
+MARKS_SUMMARY_REMOTE = "[Imported] predict_marks_summary"
 COMMENTS_REMOTE = "[Imported] project_comments"
 SERVICE_FILE = os.path.join(CREDENTIALS_DIR,"bryan-athena-scraper-0c8981cd98b3.json")
 #TODO make the students do this: build an uploader that asks for all the data, and pdf versions
@@ -159,17 +150,21 @@ def rename_downloaded_submission_files(submittor_list=[],team="",download_path="
 
 
 def unzip_and_move(submittor_list=[],team="",download_path="submissions_copy", extract_path=EXTRACT_DIR):
+	print(f"{team} submittor list is {submittor_list}")
 	submissions = len(submittor_list)
-	if submissions > 1:
+	no_submissions = submissions == 0
+	multiple_submissions = submissions > 1
+	if no_submissions:
+		print(f"WARNING: We cannot find a submittor for {team}. Please check your submission list to see if anyone submitted for {team}. Please check the dropped list to see if the submittor has since been dropped from the programme")
+	if multiple_submissions:
 		print(f"Team {team} has {submissions} submissions by students with IDs {submittor_list}")
-	for submittor in submittor_list:
-		#TODO At this time, the user must make a decision about zip files before they know what is inside them. find a way to allow them to keep peeking until the user knows which one(s) they want
-			
-		if submissions > 1:
+		for submittor in submittor_list:
+			#TODO At this time, the user must make a decision about zip files before they know what is inside them. find a way to allow them to keep peeking until the user knows which one(s) they want
 			print(f"Here are {submittor}_{team}'s files")
 			unzip_peek_string = f"unzip -l {download_path}/{submittor}_{team}.zip"
 			logging.info(f"TERMINAL COMMAND: {unzip_peek_string}")
 			subprocess.call(unzip_peek_string,shell=True)
+		for submittor in submittor_list:
 			carry_on = input(f"Do you want to include {submittor}_{team}'s files in the document? [Y]es or [N]o: ")
 			if carry_on.lower() == "yes" or carry_on.lower() == 'y':
 				print(f"including {submittor}_{team}")
@@ -179,12 +174,15 @@ def unzip_and_move(submittor_list=[],team="",download_path="submissions_copy", e
 				subprocess.call(unzip_string, shell=True)
 				continue
 			else: continue
+	else:
+		print(f"{team} submittor is {submittor_list[0]}")
+		submittor = submittor_list[0]
 		unzip_string = f"unzip -joq {download_path}/{submittor}_{team}.zip -d {extract_path}" 
 		logging.info(f"TERMINAL COMMAND: {unzip_string}")
 		subprocess.call(unzip_string, shell=True)
 		# print(unzip_string)
 
-def check_for_zips():
+def verify_zips_in_submissions_folder():
 	file_list = os.listdir(SUBMISSIONS_COPY_DIR)
 	filetype_list = []
 	for file in file_list:
@@ -203,15 +201,13 @@ def check_for_zips():
 			subprocess.call(["open", "-R", folder_to_show])
 			continue_string = input("When you have dealt with the files, press Enter to continue")
 
-
-if __name__ == "__main__":
+def populate_dataframes():
 	'''Create '''
 	try:
 		class_spreadsheet_object = get_spreadsheet(PREDICT_SOURCE_SPREADSHEET)
 	except Exception as e:
 		logging.info(e)
 		print("Did you forget to provide a spreadheet name as argument?")
-
 	student_list_worksheet_object = get_worksheet_by_title(class_spreadsheet_object,STUDENT_LIST_WORKSHEET_REMOTE)
 	teams_list_worksheet_object = get_worksheet_by_title(class_spreadsheet_object,TEAM_LIST_WORKSHEET_REMOTE)
 	marks_summary_worksheet_object = get_worksheet_by_title(class_spreadsheet_object,MARKS_SUMMARY_REMOTE)
@@ -231,14 +227,12 @@ if __name__ == "__main__":
 	teams_list = df_teams_no_blanks.tolist()
 	'''create dataframe of submittors'''
 	submittor_df = filter_dataframe_by_value(student_list_dataframe,'Submitted',"Download")
+	return student_list_dataframe, team_list_dataframe, marks_summary_dataframe, comments_dataframe, teams_list, submittor_df
 
-	check_for_zips()
-
+def extract_and_choose_files(teams_list=[]):
 	for team in teams_list:
 		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
-		print("-------------")
-		print(f"TEAM {team}")
-		print("-------------")
+		print_team_header(team, process="Extracting submission files")
 		pages_complete_team_dir = os.path.join(PAGES_COMPLETE_DIR,team)
 		print("Making pages and pages_complete directory")
 		logging.info(f"TERMINAL COMMAND: mkdir {pages_complete_team_dir}")
@@ -255,10 +249,14 @@ if __name__ == "__main__":
 		'''Make student and submission zips '''
 		team_submittor_list = filter_dataframe_by_value(submittor_df,'Team',team)['USER ID'].tolist()
 		rename_downloaded_submission_files(submittor_list=team_submittor_list,team=team)
-		
 		unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=SUBMISSIONS_COPY_DIR,extract_path=team_files_extracted_path)
+	return 0
 
+def trim_and_identify_files(teams_list = []):
+	for team in teams_list:
+		print_team_header(team, process="Choose and label files")
 		'''Get valid submissions file list'''
+		team_files_extracted_path = os.path.join(EXTRACT_DIR,team)
 		files_dictionary = files_helper.get_files(team=team,files_path=team_files_extracted_path)
 		print(f"Cleaning {team}'s folder. Please see logs for details of files removed")
 		filetypes_list = list(files_dictionary)
@@ -266,79 +264,173 @@ if __name__ == "__main__":
 			for filename in files_dictionary[filetype]:
 				if filename.split('.')[1].isupper():
 					files_helper.lower_file_extension_case(team=team, filename=filename,input_path=team_files_extracted_path,output_path=team_files_extracted_path)
-		'''Check for Duplicates, clean, and convert jpeg ot png'''
+		
+		'''Convert jpeg ot png'''
 		filetypes_list = list(files_dictionary)
 		for filetype in filetypes_list:
-			if(filetype != "png") and (filetype!="jpeg") and (len(files_dictionary[filetype])>1):
-				for filename in files_dictionary[filetype]:
-					files_helper.multi_file_helper(team=team, filename=filename, filetype=filetype,input_path=team_files_extracted_path)
 			if(filetype == "jpeg"):
 				files_helper.jpeg_to_png(team=team,input_path=team_files_extracted_path,output_path=team_files_extracted_path)
+			'''Check for Duplicates, clean, and label'''
+			if((filetype != "png") and (len(files_dictionary[filetype])>1)) or ((filetype == "ipynb") and (len(files_dictionary[filetype])==1)):
+				for filename in files_dictionary[filetype]:
+					files_helper.multi_file_helper(team=team, filename=filename, filetype=filetype,input_path=team_files_extracted_path)
+	return 0
+
+def create_students_info_pages(teams_list=[]):
+		for team in teams_list:
+			print_team_header(team, process="Creating information pages")
+			pages_output_path =os.path.join(PROJECT_DIR,team)
+
+			'''Making cover page'''
+			print(f"Extracting {team} rows into Cover page Dictionary")
+			team_name_df = filter_dataframe_by_value(team_list_dataframe,'Team', team)
+			students_df = filter_dataframe_by_value(student_list_dataframe,'Team', team)
+			students_string = dataframe_rows_to_string(students_df[['Name']])
+			team_files_extracted_path = os.path.join(EXTRACT_DIR,team)
+			cover_dict = {"team": team, "project":team_name_df['Project'].iloc[0], "mark":team_name_df['Mark'].iloc[0], "members":students_string}
+			print(f"Generating cover page for {team}")
+			cover_page_filename, cover_page_path=create_cover_page(cover_dict)
+			
+
+			'''Making students page'''
+			print(f"Extracting {team} rows into students page dictionary")
+			team_df = filter_dataframe_by_value(team_list_dataframe,'Team', team)
+			students_df = filter_dataframe_by_value(student_list_dataframe,'Team', team)
+			individual_string = dataframe_rows_to_string(students_df[['Name', 'Mark', 'Problem']])
+			comment_string = dataframe_rows_to_string(team_df[['Notes']], team)
+			students_dict = {"team": team, "Notes": comment_string, "members":individual_string}
+			print(f"Generating indivuals page for {team}")
+			students_page_filename, students_page_path=create_students_page(students_dict)
+			
+
+			'''Making comments page'''
+			#TODO make this column title agnostic?
+			print(f"Extracting {team} rows into students page dictionary")
+			comment_df = filter_dataframe_by_value(comments_dataframe,'Team', team)
+			marker_one_string = dataframe_rows_to_string(comment_df[['Marker 1']],team)
+			marker_two_string = dataframe_rows_to_string(comment_df[['Marker 2']],team)
+			marker_notebook_string = dataframe_rows_to_string(comment_df[['Notebook']],team)
+			marker_additional_string = dataframe_rows_to_string(comment_df[['Additional notes']],team)
+			marker_app_string = dataframe_rows_to_string(comment_df[['App']],team)
+			comments_dict = {"team": team, "Marker 1":marker_one_string, "Marker 2":marker_two_string,"Notebook":marker_notebook_string, "Additional notes":marker_additional_string, "App":marker_app_string}
+			comments_page_filename, comments_page_path=create_comments_page(comments_dict)
+
+			'''convert pages to html'''
+			
+			files_helper.ipynb_to_pdf(team=team,file_list=[cover_page_filename,students_page_filename,comments_page_filename],input_path=PAGES_OUTPUT_DIR, output_path=pages_output_path)
 		
-		'''Update valid submissions file lists'''
-		files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
-		filetypes_list = list(files_dictionary)
 
-		for filetype in filetypes_list:
-			print(f"Converting file to pdf. filetype is {filetype} from filestype_list")
-			if filetype != "pdf":
-				#TODO Figure out the input path for this section and for files_converter_helper
-				files_helper.files_converter_helper(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
 
+def convert_and_move_files(teams_list = []):
+		# Finally, move all pdfs
+		for team in teams_list:
+			print_team_header(team, process="Converting")
+			team_files_extracted_path = os.path.join(EXTRACT_DIR,team)
+			team_files_pdf_path = os.path.join(PROJECT_DIR,team)
+			'''Update valid submissions file lists to check if all files are now pdf'''
+			files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
+			filetypes_list = list(files_dictionary)
+
+			for filetype in filetypes_list:
+				print(f"Converting file to pdf. filetype is {filetype} from filestype_list")
+				if filetype != "pdf":
+					#TODO Figure out the input path for this section and for files_converter_helper
+					files_helper.files_converter_helper(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
+
+def move_pdfs(teams_list=[]):
+	# Finally, move all pdfs
+	for team in teams_list:
+		print_team_header(team, process="moving PDFs to report directory")
+		team_files_extracted_path = os.path.join(EXTRACT_DIR,team)
+		team_files_pdf_path = os.path.join(PROJECT_DIR,team)
 		'''Update valid submissions file lists to check if all files are now pdf'''
 		files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
 		filetypes_list = list(files_dictionary)
 		for filetype in filetypes_list:
 			if filetype == "pdf":
 				files_helper.pdf_mover(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
+
+
+
+def print_team_header(team = "", process=""):
+		print("-------------")
+		print(f"TEAM: {team} {process}")
+		print("-------------")
+
+def verify_teams_have_submitted(teams_list = [],submittor_df = None):
+	for team in teams_list:
+
+		
+		'''Make student and submission zips '''
+		team_submittor_list = filter_dataframe_by_value(submittor_df,'Team',team)['USER ID'].tolist()
+		submissions = len(team_submittor_list)
+		no_submissions = submissions == 0
+		if no_submissions:
+			print(f"WARNING: We cannot find a submittor for {team}. Please check your submission list to see if anyone submitted for {team}. Please check the dropped list to see if the submittor has since been dropped from the programme")
+			#TODO Add options
+			while True:
+				refresh = input("Would you like to refresh the data source and continue? [Y]es or [N]o?\n")
+				match refresh.lower():
+					case "y":
+						student_list_dataframe, team_list_dataframe, marks_summary_dataframe, comments_dataframe, teams_list, submittor_df = populate_dataframes()
+						break
+					case "n":
+						break
+					case _:
+						print("Please enter 'y' for to refresh data or 'n' to skip to the next team")
+
+
+if __name__ == "__main__":
+	student_list_dataframe, team_list_dataframe, marks_summary_dataframe, comments_dataframe, teams_list, submittor_df = populate_dataframes()
+
+	verify_zips_in_submissions_folder()
+	verify_teams_have_submitted(teams_list,submittor_df)
+	
+	while True:
+		step_input = input("what would you like to do?\n0. Refresh the data source\n1. Create cover, comment and marks pages\n2. Extract submissions\n3. Trim and choose files\n4. Convert files to pdf\n5. Move pdfs to report directory\n6. All of the above\nQuit. End the programme\n")
+		match step_input.lower():
+			case "0":
+				student_list_dataframe, team_list_dataframe, marks_summary_dataframe, comments_dataframe, teams_list, submittor_df = populate_dataframes()
+				verify_teams_have_submitted(teams_list,submittor_df)
+			case "1":
+				create_students_info_pages(teams_list=teams_list)
+			case "2":
+				extract_and_choose_files(teams_list=teams_list)
+			case "3":
+				trim_and_identify_files(teams_list=teams_list)
+			case "4":
+				convert_and_move_files(teams_list=teams_list)
+
+			case "5":
+				move_pdfs(teams_list=teams_list)
+			case "6":
+				create_students_info_pages(teams_list=teams_list) 
+				extract_and_choose_files(teams_list=teams_list)
+				trim_and_identify_files(teams_list=teams_list)
+				convert_and_move_files(teams_list=teams_list)
+			case "quit":
+				print("thank you! Goodbye") 
+				break
+			case _:
+				print("please input a number from 0")
+				continue
+
+
+
+		
+	
+	# 	'''Update valid submissions file lists to check if all files are now pdf'''
+	# 	files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
+	# 	filetypes_list = list(files_dictionary)
+	# 	for filetype in filetypes_list:
+	# 		if filetype == "pdf":
+	# 			files_helper.pdf_mover(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
 					
 		
 
-		'''Making cover page'''
-		print(f"Extracting {team} rows into Cover page Dictionary")
-		team_name_df = filter_dataframe_by_value(team_list_dataframe,'Team', team)
-		students_df = filter_dataframe_by_value(student_list_dataframe,'Team', team)
-		students_string = dataframe_rows_to_string(students_df[['Name']])
-		cover_dict = {"team": team, "project":team_name_df['Project'].iloc[0], "mark":team_name_df['Mark'].iloc[0], "members":students_string}
-		print(f"Generating cover page for {team}")
-		cover_page_filename, cover_page_path=create_cover_page(cover_dict)
-		
 
-		'''Making students page'''
-		print(f"Extracting {team} rows into students page dictionary")
-		team_df = filter_dataframe_by_value(team_list_dataframe,'Team', team)
-		students_df = filter_dataframe_by_value(student_list_dataframe,'Team', team)
-		individual_string = dataframe_rows_to_string(students_df[['Name', 'Mark', 'Problem']])
-		comment_string = dataframe_rows_to_string(team_df[['Notes']], team)
-		students_dict = {"team": team, "Notes": comment_string, "members":individual_string}
-		print(f"Generating indivuals page for {team}")
-		students_page_filename, students_page_path=create_students_page(students_dict)
-		
 
-		'''Making comments page'''
-		#TODO make this column title agnostic?
-		print(f"Extracting {team} rows into students page dictionary")
-		comment_df = filter_dataframe_by_value(comments_dataframe,'Team', team)
-		marker_one_string = dataframe_rows_to_string(comment_df[['Marker 1']],team)
-		marker_two_string = dataframe_rows_to_string(comment_df[['Marker 2']],team)
-		marker_notebook_string = dataframe_rows_to_string(comment_df[['Notebook']],team)
-		marker_additional_string = dataframe_rows_to_string(comment_df[['Additional notes']],team)
-		marker_app_string = dataframe_rows_to_string(comment_df[['App']],team)
-		comments_dict = {"team": team, "Marker 1":marker_one_string, "Marker 2":marker_two_string,"Notebook":marker_notebook_string, "Additional notes":marker_additional_string, "App":marker_app_string}
-		comments_page_filename, comments_page_path=create_comments_page(comments_dict)
-		
-		'''convert pages to ipynb'''
-		pages_output_path =os.path.join(PROJECT_DIR,team)
-		files_helper.ipynb_to_pdf(team=team,file_list=[cover_page_filename,students_page_filename,comments_page_filename],input_path=PAGES_OUTPUT_DIR, output_path=pages_output_path)
-	
-	# Finally, move all pdfs
-	for team in teams_list:
-		'''Update valid submissions file lists to check if all files are now pdf'''
-		files_dictionary = files_helper.get_files(team=team, files_path=team_files_extracted_path)
-		filetypes_list = list(files_dictionary)
-		for filetype in filetypes_list:
-			if filetype == "pdf":
-				files_helper.pdf_mover(team=team,filetype=filetype,file_list=files_dictionary[filetype],input_path=team_files_extracted_path,output_path=team_files_pdf_path)
+
 
 		
 
