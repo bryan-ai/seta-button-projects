@@ -33,7 +33,7 @@ def get_files(team="",files_path=WORKING_DIR):
     # print(mylist)
     accepted_file_dictionary = {}
     #TODO Figure out a config file
-    accepted_filetype_list =["png","pdf","ipynb","pptx","docx","jpeg"]
+    accepted_filetype_list =["png","pdf","ipynb","pptx","ppt","docx","jpeg"]
     blank_files = False
     for i in range(len(mylist)):
         file = mylist[i]

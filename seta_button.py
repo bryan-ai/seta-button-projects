@@ -156,6 +156,7 @@ def unzip_and_move(submittor_list=[],team="",download_path="submissions_copy", e
 	multiple_submissions = submissions > 1
 	if no_submissions:
 		print(f"WARNING: We cannot find a submittor for {team}. Please check your submission list to see if anyone submitted for {team}. Please check the dropped list to see if the submittor has since been dropped from the programme")
+		return False
 	if multiple_submissions:
 		print(f"Team {team} has {submissions} submissions by students with IDs {submittor_list}")
 		for submittor in submittor_list:
@@ -180,7 +181,7 @@ def unzip_and_move(submittor_list=[],team="",download_path="submissions_copy", e
 		unzip_string = f"unzip -joq {download_path}/{submittor}_{team}.zip -d {extract_path}" 
 		logging.info(f"TERMINAL COMMAND: {unzip_string}")
 		subprocess.call(unzip_string, shell=True)
-		# print(unzip_string)
+	return True
 
 def verify_zips_in_submissions_folder():
 	file_list = os.listdir(SUBMISSIONS_COPY_DIR)
@@ -249,7 +250,7 @@ def extract_and_choose_files(teams_list=[]):
 		'''Make student and submission zips '''
 		team_submittor_list = filter_dataframe_by_value(submittor_df,'Team',team)['USER ID'].tolist()
 		rename_downloaded_submission_files(submittor_list=team_submittor_list,team=team)
-		unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=SUBMISSIONS_COPY_DIR,extract_path=team_files_extracted_path)
+		team_submitted=unzip_and_move(submittor_list=team_submittor_list,team=team, download_path=SUBMISSIONS_COPY_DIR,extract_path=team_files_extracted_path)
 	return 0
 
 def trim_and_identify_files(teams_list = []):
@@ -360,6 +361,20 @@ def print_team_header(team = "", process=""):
 def verify_teams_have_submitted(teams_list = [],submittor_df = None):
 	for team in teams_list:
 
+		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
+		print_team_header(team, process="Extracting submission files")
+		pages_complete_team_dir = os.path.join(PAGES_COMPLETE_DIR,team)
+		print("Making pages and pages_complete directory")
+		logging.info(f"TERMINAL COMMAND: mkdir {pages_complete_team_dir}")
+		subprocess.call(["mkdir", pages_complete_team_dir])
+		
+		'''make team directory'''
+		print(f"making directory for {team}")
+		team_files_pdf_path = os.path.join(PROJECT_DIR,team)
+		team_files_extracted_path = os.path.join(EXTRACT_DIR,team)
+		team_directory_string = "mkdir " + team_files_pdf_path
+		logging.info(f"TERMINAL COMMAND: {team_directory_string}")
+		subprocess.call(team_directory_string, shell=True)
 		
 		'''Make student and submission zips '''
 		team_submittor_list = filter_dataframe_by_value(submittor_df,'Team',team)['USER ID'].tolist()
