@@ -35,8 +35,6 @@ COMMENTS_REMOTE = "[Imported] project_comments"
 SERVICE_FILE = os.path.join(CREDENTIALS_DIR,"bryan-athena-scraper-0c8981cd98b3.json")
 #TODO make the students do this: build an uploader that asks for all the data, and pdf versions
 
-#TODO Convert to separate tasks: First Extract and choose. Then clean and verify. Then convert. Then move PDFs
-
 ''' function authorise and open the connection to google sheets '''
 def get_spreadsheet(spreadsheet):
 	print(f"Authorising connection to {spreadsheet}")
@@ -160,7 +158,6 @@ def unzip_and_move(submittor_list=[],team="",download_path="submissions_copy", e
 	if multiple_submissions:
 		print(f"Team {team} has {submissions} submissions by students with IDs {submittor_list}")
 		for submittor in submittor_list:
-			#TODO At this time, the user must make a decision about zip files before they know what is inside them. find a way to allow them to keep peeking until the user knows which one(s) they want
 			print(f"Here are {submittor}_{team}'s files")
 			unzip_peek_string = f"unzip -l {download_path}/{submittor}_{team}.zip"
 			logging.info(f"TERMINAL COMMAND: {unzip_peek_string}")
@@ -232,7 +229,6 @@ def populate_dataframes():
 
 def extract_and_choose_files(teams_list=[]):
 	for team in teams_list:
-		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
 		print_team_header(team, process="Extracting submission files")
 		pages_complete_team_dir = os.path.join(PAGES_COMPLETE_DIR,team)
 		print("Making pages and pages_complete directory")
@@ -266,13 +262,14 @@ def trim_and_identify_files(teams_list = []):
 				if filename.split('.')[1].isupper():
 					files_helper.lower_file_extension_case(team=team, filename=filename,input_path=team_files_extracted_path,output_path=team_files_extracted_path)
 		
-		'''Convert jpeg ot png'''
+		
 		filetypes_list = list(files_dictionary)
 		for filetype in filetypes_list:
+			'''Convert jpeg ot png'''
 			if(filetype == "jpeg"):
 				files_helper.jpeg_to_png(team=team,input_path=team_files_extracted_path,output_path=team_files_extracted_path)
 			'''Check for Duplicates, clean, and label'''
-			if((filetype != "png") and (len(files_dictionary[filetype])>1)) or ((filetype == "ipynb") and (len(files_dictionary[filetype])==1)):
+			if((filetype != "png") and (len(files_dictionary[filetype])>1)) or ((filetype == "ipynb") and (len(files_dictionary[filetype])==1)) or filetype=="pdf":
 				for filename in files_dictionary[filetype]:
 					files_helper.multi_file_helper(team=team, filename=filename, filetype=filetype,input_path=team_files_extracted_path)
 	return 0
@@ -361,7 +358,6 @@ def print_team_header(team = "", process=""):
 def verify_teams_have_submitted(teams_list = [],submittor_df = None):
 	for team in teams_list:
 
-		#TODO make the students do this: build an uploader that asks for all the data, and pdf versions
 		print_team_header(team, process="Extracting submission files")
 		pages_complete_team_dir = os.path.join(PAGES_COMPLETE_DIR,team)
 		print("Making pages and pages_complete directory")
@@ -402,7 +398,7 @@ if __name__ == "__main__":
 	verify_teams_have_submitted(teams_list,submittor_df)
 	
 	while True:
-		step_input = input("what would you like to do?\n0. Refresh the data source\n1. Create cover, comment and marks pages\n2. Extract submissions\n3. Trim and choose files\n4. Convert files to pdf\n5. Move pdfs to report directory\n6. All of the above\nQuit. End the programme\n")
+		step_input = input("Welcome to the helper menu!\nwhat would you like to do?\n0. Refresh the data source\n1. Create cover, comment and marks pages\n2. Extract submissions\n3. Trim and choose files\n4. Convert files to pdf\n5. Move pdfs to report directory\n6. All of the above\nQuit. End the programme\n")
 		match step_input.lower():
 			case "0":
 				student_list_dataframe, team_list_dataframe, marks_summary_dataframe, comments_dataframe, teams_list, submittor_df = populate_dataframes()
