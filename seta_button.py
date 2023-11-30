@@ -205,7 +205,7 @@ def populate_dataframes():
 		class_spreadsheet_object = get_spreadsheet(PREDICT_SOURCE_SPREADSHEET)
 	except Exception as e:
 		logging.info(e)
-		print("Did you forget to provide a spreadheet name as argument?")
+		print("Did you forget to share your creds with the spreadsheet, or provide a spreadheet name as argument?")
 	student_list_worksheet_object = get_worksheet_by_title(class_spreadsheet_object,STUDENT_LIST_WORKSHEET_REMOTE)
 	teams_list_worksheet_object = get_worksheet_by_title(class_spreadsheet_object,TEAM_LIST_WORKSHEET_REMOTE)
 	marks_summary_worksheet_object = get_worksheet_by_title(class_spreadsheet_object,MARKS_SUMMARY_REMOTE)
